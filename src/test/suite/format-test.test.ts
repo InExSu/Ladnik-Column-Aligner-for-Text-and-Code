@@ -22,12 +22,12 @@ describe('File Formatting Test', () => {
 
     // Создаем конфигурацию для выравнивания
     const config_Obj = {
-      separators: [':', ','] as any,
-      padding: 2 as any,
+      separators: [':'] as any,
+      padding: 1 as any,
       alignComments: true,
       ignorePrefix: ['//', '#', ';'],
       languages: [],
-      minimalSpacing: false // Отключаем минимальное выравнивание для полного выравнивания по столбцам
+      minimalSpacing: true // Включаем минимальное добавление пробелов
     };
 
     const validation_Result = config_Validate(config_Obj);
