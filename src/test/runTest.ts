@@ -16,36 +16,34 @@ export async function run(): Promise<void> {
 
 	console.log(`Found ${testFiles.length} test files`);
 
-	let failures = 0;
+	// Run tests using mocha
+	const testFilesPaths = testFiles.map(file => path.resolve(testsRoot, file));
+	
+	const args = [
+		...testFilesPaths,
+		'--timeout', '5000',
+		'--colors'
+	];
 
-	for (const file of testFiles) {
-		const filePath = path.resolve(testsRoot, file);
-		console.log(`\n--- Running test file: ${file} ---`);
-		
-		const childProcess = spawn('node', [filePath], { stdio: 'inherit' });
-		
-		await new Promise<void>((resolve, reject) => {
-			childProcess.on('close', (code) => {
-				if (code !== 0) {
-					failures++;
-					console.error(`Test file ${file} failed with exit code ${code}`);
-					reject(new Error(`Test file ${file} failed`));
-				} else {
-					console.log(`✓ Test file ${file} passed`);
-					resolve();
-				}
-			});
-			
-			childProcess.on('error', (err) => {
-				console.error(`Failed to run test file ${file}:`, err);
-				reject(err);
-			});
+	const mochaPath = path.resolve(__dirname, '..', '..', 'node_modules', '.bin', 'mocha');
+	
+	console.log('Running tests with Mocha...');
+	const childProcess = spawn(mochaPath, args, { stdio: 'inherit' });
+
+	await new Promise<void>((resolve, reject) => {
+		childProcess.on('close', (code) => {
+			if (code !== 0) {
+				console.error(`Tests failed with exit code ${code}`);
+				reject(new Error(`Tests failed with exit code ${code}`));
+			} else {
+				console.log('\n🎉 All tests passed!');
+				resolve();
+			}
 		});
-	}
 
-	if (failures > 0) {
-		throw new Error(`${failures} test(s) failed.`);
-	} else {
-		console.log('\n🎉 All tests passed!');
-	}
+		childProcess.on('error', (err) => {
+			console.error('Failed to run tests:', err);
+			reject(err);
+		});
+	});
 }

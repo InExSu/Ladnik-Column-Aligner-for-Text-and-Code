@@ -1,0 +1,4 @@
+        "command": "ladnik.alignFile",
+        "title": "Ladnik: Align Entire File"
+const user   =   {name    :   "John"        ,   age     :   25     ,   email   :   "john@example.com"};
+const config =   {host    :   "localhost"   ,   port    :   3000   ,   debug   :   true                   ,   ssl   :   false};

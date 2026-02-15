@@ -3,37 +3,5 @@
 chown -R "$(whoami):$(id -gn)" .
 find . -name "*.sh" -exec chmod +x {} +
 
-# Analyze with current configuration
-composer analyse
-
-# Analyze with different level (0-9, where 9 is strictest)
-php vendor/bin/phpstan analyse --level 7
-
-# Analyze specific files
-php vendor/bin/phpstan analyse a_Do.php a_Methods.php
-
-# Run all tests
-php vendor/bin/phpunit tests/
-
-# Run specific test file
-php vendor/bin/phpunit tests/CompanyLinkerUnitTest.php
-
-Clear  PHPStan Cache in the Future: 
-Option 1                          : Using PHPStan Command (Recommended)
-cd /Users/michaelpopov/Documents/GitHub/PhpstormProjects/B24-Company-add-2-Deal
-php vendor/bin/phpstan clear-result-cache
-Option 2: Manual Cache Removal
-# Remove temporary cache directory
-rm -rf /var/folders/kg/655bfpyx3pd9v6fhh8fg9f8r0000gn/T/phpstan
-
-# Or remove any .cache files in project
-find . -name "*.cache" -type d -exec rm -rf {} + 2>/dev/null
-Option 3: Composer Script
-composer analyse
-VS Code Integration:
-After clearing the cache, restart VS Code or:
-
-Open Command Palette (Cmd/Ctrl + Shift + P)
-Search for "PHPStan: Clear Cache" if you have a PHPStan extension
-Or reload the window (Cmd/Ctrl + Shift + P → "Reload Window")
-The cache has been successfully cleared and your VS Code Problems panel should now show accurate results without phantom errors.
+# Жестко откатиться и забыть про изменения после этого коммита
+git reset --hard sdfsfs

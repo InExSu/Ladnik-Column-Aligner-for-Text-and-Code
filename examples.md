@@ -7,8 +7,8 @@ const user   =  {name         :  "John"              ,  age          :  25      
 const config =  {host         :  "localhost"         ,  port         :  3000         ,  debug         :  true                         ,  ssl         :  false};         
 
 // After:
-const user   =  {name    :  "John"        ,  age     :  25     ,  email   :  "john@example.com"};   
-const config =  {host    :  "localhost"   ,  port    :  3000   ,  debug   :  true                   ,  ssl   :  false};   
+const user   =   {name    :   "John"        ,   age     :   25     ,   email   :   "john@example.com"};
+const config =   {host    :   "localhost"   ,   port    :   3000   ,   debug   :   true                   ,   ssl   :   false};
 ```
 
 ## PHP
