@@ -1,0 +1,15 @@
+node_modules
+*.test.ts
+*.test.js
+*.md
+*.sh
+.git
+.vscode-test
+out/test
+src/test
+check-readiness.sh
+examples.md
+FINAL-REPORT.md
+ACCEPTANCE-CRITERIA.md
+ALL-ACCEPTANCE-CRITERIA-MET.md
+prompt_02.md

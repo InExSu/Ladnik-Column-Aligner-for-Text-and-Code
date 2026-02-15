@@ -1,0 +1,28 @@
+{
+  "align": {
+    "separators": ["=>", "::", "=", ":", "->", ","],
+    "padding": 2,
+    "alignComments": true,
+    "ignorePrefix": ["//", "#", ";"],
+    "languages": []
+  },
+  "rules": {
+    ".php": {
+      "separators": ["=>", "::", "->"],
+      "alignComments": false
+    },
+    ".js": {
+      "separators": ["=", ":"],
+      "padding": 1
+    },
+    ".py": {
+      "separators": ["="],
+      "ignorePrefix": ["#"]
+    },
+    ".css": {
+      "separators": [":"],
+      "padding": 1,
+      "ignorePrefix": ["/*", "*/"]
+    }
+  }
+}
