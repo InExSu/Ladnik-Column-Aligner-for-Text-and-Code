@@ -105,7 +105,7 @@ export function lines_Reconstruct_With_Empties(
  * Основная функция выравнивания строк
  */
 export function lines_Align(config: Config_Aligner, lines: string[]): string[] {
-  // Используем улучшенную версию с нормализацией пробелов
+  // Используем улучшенную версию с сохранением отступов
   return lines_Align_Improved(config, lines);
 }
 
@@ -240,15 +240,13 @@ function line_Parse_Into_Columns_With_Whitespace_Preservation(line: string, sepa
 }
 
 
+
 /**
  * Улучшенная функция выравнивания строк с учетом позиций разделителей
+ * Сохраняет начальные отступы строк и выполняет корректное выравнивание
+ * Использует нормализованные колонки для вычисления ширины, чтобы избежать влияния лишних пробелов
  */
 export function lines_Align_Improved(config: Config_Aligner, lines: string[]): string[] {
-  // Если включена опция минимального расстояния, используем специальную реализацию
-  if (config.minimalSpacing) {
-    return lines_Align_Minimal_Spacing(config, lines);
-  }
-  
   // 1. Сохраняем индексы пустых строк для восстановления структуры
   const empty_Line_Indices = lines
     .map((line, index) => (line_Is_Empty(line) ? index : -1))
@@ -259,20 +257,88 @@ export function lines_Align_Improved(config: Config_Aligner, lines: string[]): s
     line_Is_Valid_For_Alignment(line, config.ignorePrefix)
   );
 
-  // 3. Парсим каждую строку на колонки и разделители
-  const parsed_Lines = valid_Lines.map(line =>
+  // 3. Сохраняем начальные отступы для каждой валидной строки
+  const leading_Whitespace: string[] = valid_Lines.map(line => {
+    const match = line.match(/^\s*/);
+    return match ? match[0] : '';
+  });
+
+  // 4. Удаляем начальные отступы для обработки
+  const trimmed_Lines = valid_Lines.map(line => line.trimStart());
+
+  // 5. Парсим каждую строку на колонки и разделители
+  const parsed_Lines = trimmed_Lines.map(line =>
     line_Parse_Into_Columns_With_Whitespace_Preservation(line, config.separators as any)
   );
 
-  // 4. Находим максимальную ширину для каждой колонки
-  const max_Widths = columns_Widths_Calculate(parsed_Lines);
+  // 6. Нормализуем пробелы в колонках для вычисления ширины
+  const normalized_Columns_All_Lines: string[][] = [];
+  for (const lineParsed of parsed_Lines) {
+    const normalized_Columns = lineParsed.columns.map(col => normalize_Column_Spacing(col));
+    normalized_Columns_All_Lines.push(normalized_Columns);
+  }
 
-  // 5. Выравниваем каждую строку по максимальным ширинам
-  const aligned_Lines = parsed_Lines.map(parsed =>
-    parsed_Line_Align(parsed, max_Widths, config.padding)
-  );
+  // 7. Создаем временные нормализованные строки для вычисления ширины
+  const normalized_Parsed_Lines = parsed_Lines.map((parsed, index) => ({
+    columns: normalized_Columns_All_Lines[index],
+    separators: parsed.separators
+  }));
 
-  // 6. Восстанавливаем исходную структуру (вставляем пустые строки)
+  // 8. Находим максимальную ширину для каждой колонки на основе нормализованных данных
+  const max_Widths = columns_Widths_Calculate(normalized_Parsed_Lines);
+
+  // 9. Выравниваем каждую строку по максимальным ширинам, используя нормализованные колонки для выравнивания
+  const aligned_Lines = parsed_Lines.map((parsed, lineIndex) => {
+    // Используем нормализованные колонки для выравнивания
+    const normalized_Columns = normalized_Columns_All_Lines[lineIndex];
+
+    // Для выравнивания используем нормализованные колонки для вычисления ширины,
+    // но формируем результат на основе нормализованных данных
+    
+    const aligned_Columns: string[] = [];
+    for (let i = 0; i < parsed.columns.length; i++) {
+      const isLastColumn = (i === parsed.columns.length - 1);
+
+      if (i < max_Widths.length) {
+        if (isLastColumn) {
+          // Для последней колонки используем нормализованную строку без дополнительного выравнивания
+          aligned_Columns.push(normalize_Column_Spacing(parsed.columns[i]));
+        } else {
+          // Для других колонок используем нормализованную версию для выравнивания
+          const normalized_Column = normalized_Columns[i];
+          const content_Width = column_Width_Calculate(normalized_Column);
+
+          // Вычисляем, сколько пробелов нужно добавить
+          const target_Width = max_Widths[i];
+          const adjusted_Diff = Math.max(0, target_Width - content_Width);
+          const padded_Column = normalized_Column + ' '.repeat(adjusted_Diff);
+          aligned_Columns.push(padded_Column);
+
+          // Add separator and padding
+          if (i < parsed.separators.length && !isLastColumn) {
+            aligned_Columns.push(parsed.separators[i] + ' '.repeat(config.padding));
+          }
+        }
+      } else {
+        // If column is beyond max_Widths, just use normalized version
+        if (isLastColumn) {
+          aligned_Columns.push(normalize_Column_Spacing(parsed.columns[i]));
+        } else {
+          const normalized_Column = normalize_Column_Spacing(parsed.columns[i]);
+          aligned_Columns.push(normalized_Column);
+
+          // Add separator if applicable
+          if (i < parsed.separators.length && !isLastColumn) {
+            aligned_Columns.push(parsed.separators[i] + ' '.repeat(config.padding));
+          }
+        }
+      }
+    }
+
+    return leading_Whitespace[lineIndex] + aligned_Columns.join('');
+  });
+
+  // 10. Восстанавливаем исходную структуру (вставляем пустые строки)
   return lines_Reconstruct_With_Empties(lines, aligned_Lines, empty_Line_Indices);
 }
 
@@ -292,6 +358,7 @@ function normalize_Column_Spacing(text: string): string { // eslint-disable-line
 /**
  * Упрощенная функция выравнивания строк с минимальным добавлением пробелов
  * Эта функция не выравнивает колонки по максимальной ширине, а просто нормализует пробелы
+ * Сохраняет начальные отступы строк
  */
 export function lines_Align_Minimal_Spacing(config: Config_Aligner, lines: string[]): string[] {
   // 1. Сохраняем индексы пустых строк для восстановления структуры
@@ -304,13 +371,22 @@ export function lines_Align_Minimal_Spacing(config: Config_Aligner, lines: strin
     line_Is_Valid_For_Alignment(line, config.ignorePrefix)
   );
 
-  // 3. Парсим каждую строку на колонки и разделители
-  const parsed_Lines = valid_Lines.map(line =>
+  // 3. Сохраняем начальные отступы для каждой валидной строки
+  const leading_Whitespace: string[] = valid_Lines.map(line => {
+    const match = line.match(/^\s*/);
+    return match ? match[0] : '';
+  });
+
+  // 4. Удаляем начальные отступы для обработки
+  const trimmed_Lines = valid_Lines.map(line => line.trimStart());
+
+  // 5. Парсим каждую строку на колонки и разделители
+  const parsed_Lines = trimmed_Lines.map(line =>
     line_Parse_Into_Columns_With_Whitespace_Preservation(line, config.separators as any)
   );
 
-  // 4. Нормализуем пробелы и формируем результат без выравнивания по максимальной ширине
-  const aligned_Lines = parsed_Lines.map(parsed => {
+  // 6. Нормализуем пробелы и формируем результат без выравнивания по максимальной ширине
+  const aligned_Lines = parsed_Lines.map((parsed, index) => {
     const aligned_Parts: string[] = [];
 
     for (let i = 0; i < parsed.columns.length; i++) {
@@ -326,10 +402,11 @@ export function lines_Align_Minimal_Spacing(config: Config_Aligner, lines: strin
       }
     }
 
-    return aligned_Parts.join('');
+    // Восстанавливаем начальные отступы
+    return leading_Whitespace[index] + aligned_Parts.join('');
   });
 
-  // 5. Восстанавливаем исходную структуру (вставляем пустые строки)
+  // 7. Восстанавливаем исходную структуру (вставляем пустые строки)
   return lines_Reconstruct_With_Empties(lines, aligned_Lines, empty_Line_Indices);
 }
 
@@ -397,8 +474,7 @@ export function config_Validate(config: any): Result<Config_Aligner> {
         padding: config.padding as any,
         alignComments: config.alignComments,
         ignorePrefix: config.ignorePrefix,
-        languages: config.languages,
-        minimalSpacing: config.minimalSpacing || false
+        languages: config.languages
       }
     };
   } catch (error) {

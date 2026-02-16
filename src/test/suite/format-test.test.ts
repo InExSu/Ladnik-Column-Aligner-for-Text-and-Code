@@ -26,8 +26,7 @@ describe('File Formatting Test', () => {
       padding: 1 as any,
       alignComments: true,
       ignorePrefix: ['//', '#', ';'],
-      languages: [],
-      minimalSpacing: false // Включаем минимальное добавление пробелов
+      languages: []
     };
 
     const validation_Result = config_Validate(config_Obj);

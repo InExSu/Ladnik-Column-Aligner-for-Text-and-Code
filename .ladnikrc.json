@@ -1,27 +1,27 @@
 {
   "align": {
-    "separators": ["=>", "::", "=", ":", "->", ","],
-    "padding": 2,
+    "separators"   : ["=>", "::", "=", ":", "->", ","],
+    "padding"      : 2,
     "alignComments": true,
-    "ignorePrefix": ["//", "#", ";"],
-    "languages": []
+    "ignorePrefix" : ["//", "#", ";"],
+    "languages"    : []
   },
   "rules": {
     ".php": {
-      "separators": ["=>", "::", "->"],
+      "separators"   : ["=>", "::", "->"],
       "alignComments": false
     },
     ".js": {
       "separators": ["=", ":"],
-      "padding": 1
+      "padding"   : 1
     },
     ".py": {
-      "separators": ["="],
+      "separators"  : ["="],
       "ignorePrefix": ["#"]
     },
     ".css": {
-      "separators": [":"],
-      "padding": 1,
+      "separators"  : [":"],
+      "padding"     : 1,
       "ignorePrefix": ["/*", "*/"]
     }
   }
